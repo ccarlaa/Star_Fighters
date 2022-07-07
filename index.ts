@@ -1,4 +1,4 @@
-import express from "express";
+import express, { query } from "express";
 import { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -95,11 +95,28 @@ app.post("/battle", async (req: Request, res: Response) => {
         }
         res.status(201).send(returnFront) 
     } catch (err) {
-        console.log(err)
+        res.status(err.response.status).send(err)
     }
 })
 
-
+app.get('/ranking', async (req: Request, res: Response) => {
+    try {
+        const ranking = await connection.query(`
+        SELECT
+            username, SUM(wins) AS wins, SUM(losses) AS losses, SUM(draws) AS draws 
+        FROM 
+            fighters 
+        GROUP BY 
+            username
+        ORDER BY 
+            wins DESC
+        `);
+        const fighters : object = {"fighters": ranking.rows}
+        res.status(200).send(fighters)   
+    } catch (err) {
+        res.status(err.response.status).send(err)
+    }
+})
 const port = process.env.PORT
 app.listen(port, () => {
     console.log(`|-----------------------------------|`)
